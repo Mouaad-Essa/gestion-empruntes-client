@@ -19,7 +19,7 @@ const RegisterScreen = () => {
 
     try {
       const response = await fetch(
-        "http://192.168.56.1:5000/api/auth/register",
+        "http://192.168.1.17:5000/api/auth/register",
         {
           method: "POST",
           headers: {
