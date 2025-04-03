@@ -4,6 +4,10 @@ import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/AuthContext";
 
+import Constants from "expo-constants";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
 const LoginScreen = () => {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -20,7 +24,7 @@ const LoginScreen = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://192.168.1.17:5000/api/auth/login", {
+      const response = await fetch(`${apiUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, mot_de_passe: motDePasse }),

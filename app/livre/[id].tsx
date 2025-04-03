@@ -2,9 +2,11 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
 import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useAuth } from "../../AuthContext"; // Import auth context
-import { Link } from "expo-router"; // Import Link from expo-router
+import { useAuth } from "../../AuthContext";
 import { ArrowLeft } from "lucide-react-native";
+import Constants from "expo-constants";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
 const LivreDetailsScreen = () => {
   const { id } = useLocalSearchParams();
@@ -17,12 +19,11 @@ const LivreDetailsScreen = () => {
   useEffect(() => {
     const fetchBookDetails = async () => {
       try {
-        const url = `http://192.168.1.17:5000/api/livre/${id}`;
+        const url = `${apiUrl}/api/livre/${id}`;
         const response = await axios.get(url, {
           headers: { Authorization: `Bearer ${token}` }, // Pass token
         });
 
-        // ✅ Convert `est_emprunte` to boolean
         const bookData = {
           ...response.data,
           est_emprunte: Boolean(response.data.est_emprunte), // Ensure it's boolean
@@ -44,7 +45,7 @@ const LivreDetailsScreen = () => {
     if (!user || !book) return;
     try {
       const response = await axios.post(
-        "http://192.168.1.17:5000/api/emp/emprunter",
+        `${apiUrl}/api/emp/emprunter`,
         { utilisateur_id: user.id, livre_id: book.id },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -81,12 +82,12 @@ const LivreDetailsScreen = () => {
           </TouchableOpacity>
 
           {/* Placeholder for Book Image */}
-          <View className="w-full h-2/4 bg-gray-200 items-center justify-center">
+          <View className="w-full h-auto bg-gray-200 items-center justify-center">
             <Image
               source={{
-                uri: book.image_url || "https://via.placeholder.com/300",
+                uri: book.couverture || "https://via.placeholder.com/300",
               }}
-              className="w-40 h-40 rounded-lg"
+              className="w-full h-full rounded-lg"
               resizeMode="cover"
             />
           </View>

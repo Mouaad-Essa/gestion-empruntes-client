@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { View, Text, ScrollView } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
+import { useFocusEffect } from "@react-navigation/native";
+import Constants from "expo-constants";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
 const EmpruntScreen = () => {
   const [emprunts, setEmprunts] = useState<any[]>([]);
@@ -10,16 +13,12 @@ const EmpruntScreen = () => {
   // Fetch emprunts data
   const fetchEmprunts = async () => {
     try {
-      const token = await AsyncStorage.getItem("token"); // Récupérer le token
-
-      const response = await axios.get(
-        "http://192.168.1.17:5000/api/emp/userEmprunt",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, // Ajouter le token dans les headers
-          },
-        }
-      );
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.get(`${apiUrl}/api/emp/userEmprunt`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       setEmprunts(response.data);
     } catch (error) {

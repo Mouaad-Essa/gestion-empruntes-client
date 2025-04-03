@@ -8,13 +8,24 @@ import {
   TextInput,
   Switch,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Eye } from "lucide-react-native";
-import { useFocusEffect } from "@react-navigation/native"; // Import useFocusEffect
+import { useFocusEffect } from "@react-navigation/native";
+import Constants from "expo-constants";
+import { useAuth } from "@/AuthContext";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
 const IndexScreen = () => {
+  const { user } = useAuth();
+
+  // Redirect if the user is not an admin
+  if (user?.role === "admin") {
+    return <Redirect href="/dashboard" />; // Redirect to the dashboard
+  }
+
   const router = useRouter();
   const [books, setBooks] = useState<any[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
@@ -26,7 +37,7 @@ const IndexScreen = () => {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      const response = await axios.get("http://192.168.1.17:5000/api/livres", {
+      const response = await axios.get(`${apiUrl}/api/livres`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -108,11 +119,14 @@ const IndexScreen = () => {
             key={book.id}
             className="w-[45%] p-3 bg-white rounded-lg shadow-md border border-light-300"
           >
+            {/* Render image from the database */}
             <Image
               source={{
-                uri: "https://via.placeholder.com/150", // Placeholder image URL
+                uri: book.couverture
+                  ? `${book.couverture}` // Assuming the couverture is base64-encoded
+                  : "https://via.placeholder.com/150", // Placeholder image
               }}
-              className="w-full h-40 rounded-lg  bg-black"
+              className="w-full h-40 rounded-lg bg-black"
             />
             <View className="flex justify-around gap-2 bg-light-200 p-1 rounded-lg my-2 flex-1 h-auto">
               <Text className="text-lg font-bold text-dark-800">

@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
+import Constants from "expo-constants";
+
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
 const RegisterScreen = () => {
   const router = useRouter();
   const [nom, setNom] = useState("");
@@ -18,16 +22,13 @@ const RegisterScreen = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(
-        "http://192.168.1.17:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ nom, email, mot_de_passe: motDePasse }),
-        }
-      );
+      const response = await fetch(`${apiUrl}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ nom, email, mot_de_passe: motDePasse }),
+      });
 
       const data = await response.json();
 

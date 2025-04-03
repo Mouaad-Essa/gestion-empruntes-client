@@ -35,6 +35,8 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
+          <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
+          <Stack.Screen name="livre/addBook" options={{ headerShown: false }} />
           <Stack.Screen
             name="(auth)/register"
             options={{ headerShown: false }}
