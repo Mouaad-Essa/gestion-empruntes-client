@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   TextInput,
   View,
@@ -8,17 +8,17 @@ import {
   Switch,
   ScrollView,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker"; // Import the image picker
+import * as ImagePicker from "expo-image-picker";
 import axios from "axios";
 import Constants from "expo-constants";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
-const AddBookForm = () => {
-  const [bookCover, setBookCover] = useState<string | null>(null); // Image as Base64
-  const router = useRouter();
+const UpdateBookForm = () => {
+  const [bookCover, setBookCover] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     titre: "",
     auteur: "",
@@ -30,16 +30,43 @@ const AddBookForm = () => {
     couverture: "",
   });
 
-  // Request permission to access media library (important for expo)
+  const router = useRouter();
+  const { id } = useLocalSearchParams(); // get book ID from the route
+
   useEffect(() => {
     (async () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        alert("Permission to access media library is required!");
+        alert("L'autorisation d'accéder à la galerie est requise !");
       }
     })();
-  }, []);
+
+    const fetchBook = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token"); // or SecureStore if you're using it
+        const response = await axios.get(`${apiUrl}/api/livre/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setFormData({
+          ...response.data,
+          annee_publication: response.data.annee_publication?.toString() || "",
+          est_emprunte: response.data.est_emprunte === 1,
+        });
+
+        setBookCover(response.data.couverture);
+      } catch (error) {
+        console.error("Erreur lors du chargement du livre :", error);
+      }
+    };
+
+    if (id) {
+      fetchBook();
+    }
+  }, [id]);
 
   const handleChange = (name: string, value: string | boolean) => {
     setFormData({
@@ -48,43 +75,40 @@ const AddBookForm = () => {
     });
   };
 
-  // Function to handle image picking
   const handleImageUpload = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images, // Only pick images
-      allowsEditing: true, // Allow user to crop or edit the image
-      aspect: [4, 3], // Optional: Aspect ratio
-      quality: 1, // Optional: Image quality (1 = high quality)
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
     });
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
-      const selectedImage = result.assets[0].uri; // Access URI of selected image
-      const base64Image = await uriToBase64(selectedImage); // Convert the URI to Base64
+      const selectedImage = result.assets[0].uri;
+      const base64Image = await uriToBase64(selectedImage);
       handleChange("couverture", base64Image);
-      setBookCover(base64Image); // Save the image as base64 string
+      setBookCover(base64Image);
     }
   };
 
-  // Convert image URI to Base64
   const uriToBase64 = async (uri: string) => {
     const response = await fetch(uri);
     const blob = await response.blob();
     const reader = new FileReader();
     return new Promise<string>((resolve, reject) => {
-      reader.onloadend = () => {
-        resolve(reader.result as string);
-      };
+      reader.onloadend = () => resolve(reader.result as string);
       reader.onerror = reject;
       reader.readAsDataURL(blob);
     });
   };
 
-  const handleSubmit = async () => {
+  const handleUpdate = async () => {
     try {
-      const response = await axios.post(`${apiUrl}/api/livre`, formData);
-      console.log(response.data); // Handle success (show message, navigate, etc.)
+      await axios.put(`${apiUrl}/api/livre/${id}`, formData);
+      alert("Livre mis à jour avec succès !");
+      router.back();
     } catch (error) {
-      console.error(error); // Handle error (show error message)
+      console.error("Erreur lors de la mise à jour :", error);
     }
   };
 
@@ -95,89 +119,73 @@ const AddBookForm = () => {
     >
       <TouchableOpacity
         onPress={() => router.back()}
-        className="flex items-center justify-center p-3 
-            flex-row gap-2 rounded-full shadow-md
-            my-2
-            w-2/5
-            bg-primary"
+        className="flex items-center justify-center p-3 flex-row gap-2 rounded-full shadow-md my-2 w-2/5 bg-primary"
       >
         <ArrowLeft size={25} color={"#f6f6f6"} />
         <Text className="text-light-200 font-bold">Retour</Text>
       </TouchableOpacity>
+
       <Text className="text-2xl font-bold text-dark-100 mb-4">
-        Ajouter un Livre
+        Modifier le Livre
       </Text>
 
-      {/* Book Title */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">Titre</Text>
         <TextInput
           value={formData.titre}
           onChangeText={(text) => handleChange("titre", text)}
-          placeholder="Entrez le titre du livre"
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* Author */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">Auteur</Text>
         <TextInput
           value={formData.auteur}
           onChangeText={(text) => handleChange("auteur", text)}
-          placeholder="Entrez l'auteur du livre"
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* Description */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">Description</Text>
         <TextInput
           value={formData.description}
           onChangeText={(text) => handleChange("description", text)}
-          placeholder="Entrez la description du livre"
           multiline
           numberOfLines={4}
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* Publication Year */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">Année de Publication</Text>
         <TextInput
           value={formData.annee_publication}
           onChangeText={(text) => handleChange("annee_publication", text)}
-          placeholder="Entrez l'année de publication"
           keyboardType="numeric"
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* Genre */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">Genre</Text>
         <TextInput
           value={formData.genre}
           onChangeText={(text) => handleChange("genre", text)}
-          placeholder="Entrez le genre du livre"
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* ISBN */}
       <View className="mb-4">
         <Text className="text-dark-200 text-sm">ISBN</Text>
         <TextInput
           value={formData.isbn}
           onChangeText={(text) => handleChange("isbn", text)}
-          placeholder="Entrez l'ISBN du livre"
           className="p-3 border border-light-300 rounded-lg"
         />
       </View>
 
-      {/* Availability */}
       <View className="mb-4 flex-row items-center">
         <Text className="text-dark-200 text-sm mr-2">Est-il emprunté ?</Text>
         <Switch
@@ -194,7 +202,7 @@ const AddBookForm = () => {
           onPress={handleImageUpload}
           className="p-3 border border-light-300 rounded-lg"
         >
-          <Text className="text-primary">Choisir une image</Text>
+          <Text className="text-primary">Changer l'image</Text>
         </TouchableOpacity>
         {bookCover && (
           <Image
@@ -205,17 +213,15 @@ const AddBookForm = () => {
       </View>
 
       <TouchableOpacity
-        onPress={handleSubmit}
-        className="bg-primary py-3 rounded-lg
-       
-        "
+        onPress={handleUpdate}
+        className="bg-primary py-3 rounded-lg"
       >
-        <Text className=" text-light-200 text-center text-xl">
-          Ajouter le Livre
+        <Text className="text-light-200 text-center text-xl">
+          Mettre à jour
         </Text>
       </TouchableOpacity>
     </ScrollView>
   );
 };
 
-export default AddBookForm;
+export default UpdateBookForm;

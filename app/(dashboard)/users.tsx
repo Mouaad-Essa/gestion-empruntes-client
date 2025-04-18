@@ -1,38 +1,59 @@
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
-import React, { useState } from "react";
-import { Plus, User } from "lucide-react-native"; // Import Lucide Icon
-import { useRouter } from "expo-router"; // Import useRouter from Expo
+import { View, Text, TouchableOpacity, ScrollView, Alert } from "react-native";
+import React, { useState, useEffect } from "react";
+import { Plus } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
 const Users = () => {
-  // Static array of users to simulate the data
-  const users = [
-    {
-      id: 1,
-      nom: "John Doe",
-      email: "johndoe@example.com",
-      role: "utilisateur",
-    },
-    { id: 2, nom: "Jane Smith", email: "janesmith@example.com", role: "admin" },
-    {
-      id: 3,
-      nom: "Alice Johnson",
-      email: "alice@example.com",
-      role: "utilisateur",
-    },
-    { id: 4, nom: "Bob Brown", email: "bob@example.com", role: "admin" },
-    // Add more users as needed to test scrolling
-  ];
+  const [users, setUsers] = useState<any[]>([]);
+  const router = useRouter();
 
-  const router = useRouter(); // Initialize useRouter hook
-
-  // Handle navigation to the add user screen
-  const handleNavigateToAddUser = () => {
-    router.push("../users/addUser"); // Navigate to Add User screen
+  // Fetch users
+  const fetchUsers = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const response = await axios.get(`${apiUrl}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des utilisateurs", error);
+    }
   };
 
-  // Handle navigation to the update user screen
+  //fetch
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Handle navigation to the Add User
+  const handleNavigateToAddUser = () => {
+    router.push("../users/addUser");
+  };
+
+  // Handle navigation to the Update User
   const handleNavigateToUpdateUser = (id: number) => {
-    router.push(`../users/${id}`); // Navigate to Update User screen
+    router.push(`../users/updateUser/${id}`);
+  };
+
+  // Handle Delete User
+  const handleDeleteUser = async (id: number) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      await axios.delete(`${apiUrl}/api/user/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      fetchUsers(); // Re-fetch
+    } catch (error) {
+      console.error("Erreur lors de la suppression de l'utilisateur", error);
+    }
   };
 
   return (
@@ -49,12 +70,11 @@ const Users = () => {
         <Plus size={24} color="white" />
       </TouchableOpacity>
 
-      {/* Scrollable List of Users */}
       <ScrollView className="flex gap-3 ">
         {users.map((user) => (
           <View
             key={user.id}
-            className=" bg-white p-4 mb-3 rounded-lg shadow-md flex-row justify-between items-center"
+            className="bg-white p-4 mb-3 rounded-lg shadow-md flex-row justify-between items-center"
           >
             <View>
               <Text className="text-dark-100 font-semibold">{user.nom}</Text>
@@ -70,7 +90,24 @@ const Users = () => {
                 <Text className="text-white">Update</Text>
               </TouchableOpacity>
               {/* Delete Button */}
-              <TouchableOpacity className="bg-red-500 p-2 rounded-lg">
+              <TouchableOpacity
+                onPress={() => {
+                  // Confirmation
+                  Alert.alert(
+                    "Supprimer l'utilisateur",
+                    `Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.nom}?`,
+                    [
+                      { text: "Annuler", style: "cancel" },
+                      {
+                        text: "Supprimer",
+                        onPress: () => handleDeleteUser(user.id),
+                        style: "destructive",
+                      },
+                    ]
+                  );
+                }}
+                className="bg-red-500 p-2 rounded-lg"
+              >
                 <Text className="text-white">Delete</Text>
               </TouchableOpacity>
             </View>

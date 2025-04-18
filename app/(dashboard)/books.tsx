@@ -7,8 +7,9 @@ import {
   TextInput,
   Switch,
   Image,
+  Modal,
 } from "react-native";
-import { User, Plus, X, PenLine, Pen } from "lucide-react-native"; // Import Lucide Icons
+import { User, Plus, X, Pen } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -24,6 +25,9 @@ const Users = () => {
   const [filteredBooks, setFilteredBooks] = useState<any[]>([]);
   const [nameFilter, setNameFilter] = useState<string>("");
   const [showOnlyAvailable, setShowOnlyAvailable] = useState<boolean>(false);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<number | null>(null);
 
   // Fetch books from API
   const fetchBooks = async () => {
@@ -41,14 +45,12 @@ const Users = () => {
     }
   };
 
-  // Re-fetch books every time the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       fetchBooks();
     }, [])
   );
 
-  // Filter books based on name and availability
   useEffect(() => {
     const filterBooks = () => {
       let filtered = books;
@@ -69,28 +71,33 @@ const Users = () => {
     filterBooks();
   }, [books, nameFilter, showOnlyAvailable]);
 
-  // Handle navigation to the Add User screen
   const handleNavigateToAddUser = () => {
     router.push("../livre/addBook");
   };
 
-  // Handle navigation to the Update User screen
   const handleNavigateToUpdateUser = (id: number) => {
-    router.push(`../users/${id}`);
+    router.push(`../livre/updateBook/${id}`);
   };
 
-  // Handle Delete Book
-  const handleDeleteBook = async (id: number) => {
+  const confirmDeleteBook = (id: number) => {
+    setBookToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteBook = async () => {
+    if (!bookToDelete) return;
+
     try {
       const token = await AsyncStorage.getItem("token");
-      await axios.delete(`${apiUrl}/api/livres/${id}`, {
+      await axios.delete(`${apiUrl}/api/livre/${bookToDelete}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
 
-      // Re-fetch the books after deletion
       fetchBooks();
+      setShowDeleteModal(false);
+      setBookToDelete(null);
     } catch (error) {
       console.error("Échec de la suppression du livre", error);
     }
@@ -102,7 +109,6 @@ const Users = () => {
         Liste des Livres
       </Text>
 
-      {/* Add Book Button */}
       <TouchableOpacity
         onPress={handleNavigateToAddUser}
         className="absolute top-6 right-6 bg-primary p-3 rounded-full"
@@ -110,7 +116,6 @@ const Users = () => {
         <Plus size={24} color="white" />
       </TouchableOpacity>
 
-      {/* Filter Inputs */}
       <View className="mb-6">
         <TextInput
           value={nameFilter}
@@ -131,7 +136,6 @@ const Users = () => {
         </View>
       </View>
 
-      {/* Scrollable List of Books */}
       <ScrollView className="flex gap-3">
         {filteredBooks.map((book) => (
           <View
@@ -139,42 +143,34 @@ const Users = () => {
             className="bg-white p-4 mb-3 rounded-lg shadow-md flex-row justify-between items-start"
           >
             <View className="flex-1">
-              {/* Book Cover */}
               <Image
                 source={{
                   uri: book.couverture
-                    ? book.couverture // Assuming the couverture is a valid URL or base64 string
-                    : "https://via.placeholder.com/150", // Placeholder image
+                    ? book.couverture
+                    : "https://via.placeholder.com/150",
                 }}
                 className="w-32 h-32 rounded-lg mb-4 bg-gray-300"
               />
-              {/* Book Title, Author, Year of Publication */}
               <Text className="text-dark-100 font-semibold text-lg">
                 {book.titre}
               </Text>
               <Text className="text-dark-200">{book.auteur}</Text>
               <Text className="text-dark-300">{book.annee_publication}</Text>
-
-              {/* Genre, ISBN */}
               <Text className="text-dark-400">Genre: {book.genre}</Text>
               <Text className="text-dark-400">ISBN: {book.isbn}</Text>
-
-              {/* Description */}
               <Text className="text-dark-500 mt-2">{book.description}</Text>
             </View>
 
-            {/* Buttons Section */}
             <View className="flex-row space-x-4 gap-2 self-end">
-              {/* Update Button */}
               <TouchableOpacity
                 onPress={() => handleNavigateToUpdateUser(book.id)}
                 className="bg-secondary p-3 rounded-full"
               >
                 <Pen size={25} color={"#fff"} />
               </TouchableOpacity>
-              {/* Delete Button */}
+
               <TouchableOpacity
-                onPress={() => handleDeleteBook(book.id)}
+                onPress={() => confirmDeleteBook(book.id)}
                 className="bg-red-500 p-3 rounded-full"
               >
                 <X size={25} color={"#fff"} />
@@ -183,6 +179,36 @@ const Users = () => {
           </View>
         ))}
       </ScrollView>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        visible={showDeleteModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowDeleteModal(false)}
+      >
+        <View className="flex-1 justify-center items-center bg-black/50 px-8">
+          <View className="bg-white p-6 rounded-xl w-full max-w-md items-center">
+            <Text className="text-lg font-semibold mb-4 text-center">
+              Voulez-vous vraiment supprimer ce livre ?
+            </Text>
+            <View className="flex-row space-x-4 mt-4">
+              <TouchableOpacity
+                onPress={() => setShowDeleteModal(false)}
+                className="bg-gray-300 px-4 py-2 rounded-md"
+              >
+                <Text className="text-gray-800 font-medium">Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleDeleteBook}
+                className="bg-red-500 px-4 py-2 rounded-md"
+              >
+                <Text className="text-white font-medium">Supprimer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

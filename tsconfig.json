@@ -12,6 +12,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts",
-    "app/livre"
+    "app/livre",
+    "app/users/updateUser"
   ]
 }
