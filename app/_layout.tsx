@@ -38,6 +38,15 @@ export default function RootLayout() {
           <Stack.Screen name="(dashboard)" options={{ headerShown: false }} />
           <Stack.Screen name="livre/addBook" options={{ headerShown: false }} />
           <Stack.Screen
+            name="livre/updateBook/[id]"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen name="users/addUser" options={{ headerShown: false }} />
+          <Stack.Screen
+            name="users/updateUser/[id]"
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
             name="(auth)/register"
             options={{ headerShown: false }}
           />

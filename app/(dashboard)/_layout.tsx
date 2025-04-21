@@ -4,6 +4,7 @@ import { useAuth } from "@/AuthContext";
 import {
   BookCopy,
   CirclePlus,
+  Grab,
   Home,
   UserRound,
   Users,
@@ -71,6 +72,14 @@ const DashboardLayout = () => {
           tabBarIcon: ({ color, size }) => (
             <BookCopy size={size} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="emprunts"
+        options={{
+          title: "Emprunts",
+          tabBarIcon: ({ color, size }) => <Grab size={size} color={color} />,
         }}
       />
 

@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { useRouter } from "expo-router";
 
 import Constants from "expo-constants";
+import { LibraryBig } from "lucide-react-native";
 
 const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
@@ -50,7 +51,13 @@ const RegisterScreen = () => {
 
   return (
     <View className="flex-1 justify-center items-center bg-light-100 px-6">
-      <Text className="text-primary text-2xl font-bold mb-6">
+      {/* E-biblio Logo */}
+      <View className="flex flex-row items-center justify-center mb-14">
+        <LibraryBig size={50} color={"#FACC15"} />
+        <Text className="text-3xl font-bold text-primary ml-2">E-biblio</Text>
+      </View>
+
+      <Text className="text-primary self-start text-2xl font-bold mb-6">
         Créez votre compte
       </Text>
 

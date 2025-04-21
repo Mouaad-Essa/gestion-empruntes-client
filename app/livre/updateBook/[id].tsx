@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   Image,
-  Switch,
   ScrollView,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
@@ -26,7 +25,6 @@ const UpdateBookForm = () => {
     annee_publication: "",
     genre: "",
     isbn: "",
-    est_emprunte: false,
     couverture: "",
   });
 
@@ -183,16 +181,6 @@ const UpdateBookForm = () => {
           value={formData.isbn}
           onChangeText={(text) => handleChange("isbn", text)}
           className="p-3 border border-light-300 rounded-lg"
-        />
-      </View>
-
-      <View className="mb-4 flex-row items-center">
-        <Text className="text-dark-200 text-sm mr-2">Est-il emprunté ?</Text>
-        <Switch
-          value={formData.est_emprunte}
-          onValueChange={(value) => handleChange("est_emprunte", value)}
-          trackColor={{ false: "#ccc", true: "#3b82f6" }}
-          thumbColor="#fff"
         />
       </View>
 

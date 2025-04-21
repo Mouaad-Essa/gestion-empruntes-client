@@ -1,70 +1,121 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Button, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  TouchableOpacity,
+  Alert,
+  ScrollView,
+} from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAuth } from "../../AuthContext"; // Assuming you're using AuthContext
+import { useAuth } from "../../AuthContext";
+import jwtDecode from "jwt-decode";
+import axios from "axios";
+import Constants from "expo-constants";
 
-const ProfileScreen = () => {
-  const { user, logout, isLoading } = useAuth(); // Get user info, logout function, and loading state from context
-  const [token, setToken] = useState<string | null>(null); // Local state for storing token
+const apiUrl = Constants.expoConfig?.extra?.apiUrl;
+
+type DecodedToken = {
+  id: number;
+  email: string;
+  role: string;
+  exp: number;
+};
+
+const Profile = () => {
+  const { logout, isLoading } = useAuth();
+  const [token, setToken] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const getToken = async () => {
-      const storedToken = await AsyncStorage.getItem("token");
-      setToken(storedToken); // Set token state to the value in AsyncStorage
+    const fetchData = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem("token");
+        setToken(storedToken);
+
+        if (!storedToken) throw new Error("Token introuvable");
+
+        const decoded: DecodedToken = jwtDecode(storedToken);
+        const userId = decoded.id;
+
+        const { data } = await axios.get(`${apiUrl}/api/user/${userId}`, {
+          headers: { Authorization: `Bearer ${storedToken}` },
+        });
+
+        setProfile(data);
+      } catch (err: any) {
+        Alert.alert("Erreur", err.response?.data?.message || "Erreur serveur");
+      } finally {
+        setLoading(false);
+      }
     };
-    getToken();
+
+    fetchData();
   }, []);
 
   const handleLogout = async () => {
-    // Clear the user session
-    await logout(); // This will clear the token from AsyncStorage and update the user state
-
-    // Redirect to the login screen
-    router.replace("/(auth)/login"); // Redirect to login
+    await logout();
+    router.replace("/(auth)/login");
   };
 
-  if (isLoading) {
-    return <ActivityIndicator size="large" color="#0000ff" />; // Show loading indicator while data is being loaded
+  if (loading || isLoading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-light-100">
+        <ActivityIndicator size="large" color="#1E3A8A" />
+      </View>
+    );
   }
 
   return (
-    <View
-      style={{
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 20,
-      }}
-    >
-      <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 20 }}>
-        Profile Information
+    <ScrollView className="flex-1 bg-light-100 px-6 py-8">
+      <Text className="text-3xl font-extrabold text-primary text-center mb-10">
+        Mon Profil
       </Text>
 
-      {/* Display User Information */}
-      {user ? (
-        <View>
-          <Text>{user.id}</Text>
-          <Text>{user.role}</Text>
+      {profile ? (
+        <View className="bg-white p-6 rounded-2xl shadow-md space-y-6">
+          <View>
+            <Text className="text-lg font-semibold text-dark-100 mb-1">
+              Nom complet
+            </Text>
+            <Text className="text-base text-dark-300">{profile.nom}</Text>
+          </View>
+
+          <View>
+            <Text className="text-lg font-semibold text-dark-100 mb-1">
+              Email
+            </Text>
+            <Text className="text-base text-dark-300">{profile.email}</Text>
+          </View>
+
+          <View>
+            <Text className="text-lg font-semibold text-dark-100 mb-1">
+              Rôle
+            </Text>
+            <Text className="text-base text-dark-300 capitalize">
+              {profile.role}
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            className="mt-6 bg-secondary py-4 rounded-xl shadow-sm"
+          >
+            <Text className="text-center text-primary font-bold text-base">
+              Déconnexion
+            </Text>
+          </TouchableOpacity>
         </View>
       ) : (
-        <Text>No user data available</Text>
+        <Text className="text-center text-red-600 text-lg mt-8">
+          Impossible de charger le profil.
+        </Text>
       )}
-
-      {/* Display Token */}
-      {token ? (
-        <View>
-          <Text>{token}</Text>
-        </View>
-      ) : (
-        <Text>No token found</Text>
-      )}
-
-      {/* Logout Button */}
-      <Button title="Logout" onPress={handleLogout} />
-    </View>
+    </ScrollView>
   );
 };
 
-export default ProfileScreen;
+export default Profile;

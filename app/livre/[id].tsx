@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity } from "react-native";
+import {
+  View,
+  Text,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import axios from "axios";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useAuth } from "../../AuthContext";
@@ -10,7 +17,7 @@ const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
 const LivreDetailsScreen = () => {
   const { id } = useLocalSearchParams();
-  const { user, token } = useAuth(); // Get authenticated user and token
+  const { user, token } = useAuth();
   const [book, setBook] = useState<any>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,12 +28,12 @@ const LivreDetailsScreen = () => {
       try {
         const url = `${apiUrl}/api/livre/${id}`;
         const response = await axios.get(url, {
-          headers: { Authorization: `Bearer ${token}` }, // Pass token
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         const bookData = {
           ...response.data,
-          est_emprunte: Boolean(response.data.est_emprunte), // Ensure it's boolean
+          est_emprunte: Boolean(response.data.est_emprunte),
         };
 
         setBook(bookData);
@@ -43,21 +50,42 @@ const LivreDetailsScreen = () => {
 
   const handleEmprunter = async () => {
     if (!user || !book) return;
-    try {
-      const response = await axios.post(
-        `${apiUrl}/api/emp/emprunter`,
-        { utilisateur_id: user.id, livre_id: book.id },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
 
-      setBook((prevBook: any) => ({
-        ...prevBook,
-        est_emprunte: true, // Update UI after successful request
-      }));
-    } catch (err) {
-      console.error("Erreur lors de l'emprunt", err);
-      setError("Erreur lors de l'emprunt.");
-    }
+    // Show confirmation dialog before borrowing
+    Alert.alert(
+      "Confirmer l'emprunt",
+      "Êtes-vous sûr de vouloir emprunter ce livre ?",
+      [
+        {
+          text: "Annuler",
+          style: "cancel",
+        },
+        {
+          text: "Confirmer",
+          onPress: async () => {
+            try {
+              const response = await axios.post(
+                `${apiUrl}/api/emp/emprunter`,
+                { utilisateur_id: user.id, livre_id: book.id },
+                { headers: { Authorization: `Bearer ${token}` } }
+              );
+
+              setBook((prevBook: any) => ({
+                ...prevBook,
+                est_emprunte: true,
+              }));
+
+              // Redirect to home
+              router.push("/");
+            } catch (err) {
+              console.error("Erreur lors de l'emprunt", err);
+              setError("Erreur lors de l'emprunt.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (

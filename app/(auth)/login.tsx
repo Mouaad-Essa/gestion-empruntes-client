@@ -1,8 +1,16 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  Alert,
+  Image,
+} from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "@/AuthContext";
+import { LibraryBig } from "lucide-react-native"; // For the logo icon
 
 import Constants from "expo-constants";
 
@@ -35,17 +43,17 @@ const LoginScreen = () => {
         throw new Error(data.message || "Échec de la connexion");
       }
 
-      // ✅ Store token in AsyncStorage
+      // Store token in AsyncStorage
       await AsyncStorage.setItem("token", data.token);
 
       console.log("Connexion réussie !", data.token);
 
-      // ✅ Call login function from AuthContext to update user state
-      await login(data.token); // This will update the user state in AuthContext
+      // Call login function from AuthContext to update user state
+      await login(data.token);
 
-      // ✅ Add a short delay before redirecting
+      // Redirect to the profile screen or homepage
       setTimeout(() => {
-        router.replace("/(tabs)"); // Redirect to the profile screen or homepage
+        router.replace("/(tabs)");
       }, 100);
     } catch (error: any) {
       Alert.alert("Échec de la connexion", error.message);
@@ -56,8 +64,15 @@ const LoginScreen = () => {
 
   return (
     <View className="flex-1 justify-center items-center bg-light-100 px-6">
-      <Text className="text-primary text-2xl font-bold mb-6">Bienvenue !</Text>
+      {/* E-biblio Logo */}
+      <View className="flex flex-row items-center justify-center mb-14">
+        <LibraryBig size={50} color={"#FACC15"} />
+        <Text className="text-3xl font-bold text-primary ml-2">E-biblio</Text>
+      </View>
 
+      <Text className="text-primary self-start text-2xl font-bold mb-6">
+        Se connecter
+      </Text>
       {/* Champ Email */}
       <View className="w-full mb-4">
         <Text className="text-dark-100 text-lg mb-2">Adresse Email</Text>

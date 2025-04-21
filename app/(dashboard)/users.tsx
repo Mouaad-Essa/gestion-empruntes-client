@@ -87,7 +87,7 @@ const Users = () => {
                 onPress={() => handleNavigateToUpdateUser(user.id)}
                 className="bg-secondary p-2 rounded-lg "
               >
-                <Text className="text-white">Update</Text>
+                <Text className="text-dark-100">Update</Text>
               </TouchableOpacity>
               {/* Delete Button */}
               <TouchableOpacity
@@ -108,7 +108,7 @@ const Users = () => {
                 }}
                 className="bg-red-500 p-2 rounded-lg"
               >
-                <Text className="text-white">Delete</Text>
+                <Text className="text-dark-100">Delete</Text>
               </TouchableOpacity>
             </View>
           </View>

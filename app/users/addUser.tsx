@@ -12,6 +12,7 @@ import { useRouter } from "expo-router";
 import { Picker } from "@react-native-picker/picker";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ArrowLeft } from "lucide-react-native";
 
 const apiUrl = Constants.expoConfig?.extra?.apiUrl;
 
@@ -55,6 +56,17 @@ const AddUser = () => {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "#F8F8F8", padding: 16 }}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        className="flex items-center justify-center p-3 
+            flex-row gap-2 rounded-full shadow-md
+            my-2
+            w-2/5
+            bg-primary"
+      >
+        <ArrowLeft size={25} color={"#f6f6f6"} />
+        <Text className="text-light-200 font-bold">Retour</Text>
+      </TouchableOpacity>
       <Text style={{ fontSize: 24, fontWeight: "bold", marginBottom: 16 }}>
         Ajouter un Utilisateur
       </Text>
